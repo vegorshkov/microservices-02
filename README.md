@@ -233,61 +233,76 @@ Redis: In-memory хранилище с опциональной персисте
 Нет диска или гарантий ==> шина.
 
 
-## Задача 3: API Gateway * (необязательная)
+## Задача 3: API Gateway
 
-### Есть три сервиса:
+Ответ:
 
-**minio**
-- хранит загруженные файлы в бакете images,
-- S3 протокол,
+docker-compose up --build
 
-**uploader**
-- принимает файл, если картинка сжимает и загружает его в minio,
-- POST /v1/upload,
+![alt text](image-2.png)
+![alt text](image-3.png)
 
-**security**
-- регистрация пользователя POST /v1/user,
-- получение информации о пользователе GET /v1/user,
-- логин пользователя POST /v1/token,
-- проверка токена GET /v1/token/validation.
+![alt text](image-4.png)
 
-### Необходимо воспользоваться любым балансировщиком и сделать API Gateway:
+![alt text](image-5.png)
 
-**POST /v1/register**
-1. Анонимный доступ.
-2. Запрос направляется в сервис security POST /v1/user.
+Скорректировал совместимость версий.
 
-**POST /v1/token**
-1. Анонимный доступ.
-2. Запрос направляется в сервис security POST /v1/token.
+Попробуем получить JVT токен
 
-**GET /v1/user**
-1. Проверка токена. Токен ожидается в заголовке Authorization. Токен проверяется через вызов сервиса security GET /v1/token/validation/.
-2. Запрос направляется в сервис security GET /v1/user.
+```
+curl -X POST \
+  -H 'Content-Type: application/json' \
+  -d '{"login":"bob", "password":"qwe123"}' \
+  http://localhost/token
+```
+Траблшутинг, так как ответ не получен.
+![alt text](image-6.png)
 
-**POST /v1/upload**
-1. Проверка токена. Токен ожидается в заголовке Authorization. Токен проверяется через вызов сервиса security GET /v1/token/validation/.
-2. Запрос направляется в сервис uploader POST /v1/upload.
+проверили доступность security
 
-**GET /v1/user/{image}**
-1. Проверка токена. Токен ожидается в заголовке Authorization. Токен проверяется через вызов сервиса security GET /v1/token/validation/.
-2. Запрос направляется в сервис minio GET /images/{image}.
+Нашел ошибку в конфиге gateway исправил.
 
-### Ожидаемый результат
+![alt text](image-7.png)
 
-Результатом выполнения задачи должен быть docker compose файл, запустив который можно локально выполнить следующие команды с успешным результатом.
-Предполагается, что для реализации API Gateway будет написан конфиг для NGinx или другого балансировщика нагрузки, который будет запущен как сервис через docker-compose и будет обеспечивать балансировку и проверку аутентификации входящих запросов.
-Авторизация
-curl -X POST -H 'Content-Type: application/json' -d '{"login":"bob", "password":"qwe123"}' http://localhost/token
+Получен JWT  токен:  'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJib2IifQ.hiMVLmssoTsy1MqbmIoviDeFPvo-nCd92d4UFiN2O2I'
 
-**Загрузка файла**
+Попробуем загрузку файла
+![alt text](image-8.png)
 
-curl -X POST -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJib2IifQ.hiMVLmssoTsy1MqbmIoviDeFPvo-nCd92d4UFiN2O2I' -H 'Content-Type: octet/stream' --data-binary @yourfilename.jpg http://localhost/upload
+Составим команду для загрузки  с  использованием токена
+```
+curl -X POST -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJib2IifQ.hiMVLmssoTsy1MqbmIoviDeFPvo-nCd92d4UFiN2O2I' -H 'Content-Type: octet/stream' --data-binary @15_years_netology.jpg http://localhost/upload
 
-**Получение файла**
-curl -X GET http://localhost/images/4e6df220-295e-4231-82bc-45e4b1484430.jpg
+```
 
----
+Итого, я сохранил принтскрин файла с главной страницы Нетологии и использовал расширение jpg.
+далее выполнил его заррузку в minio  (minio сам определили тип файла :)  и сохранил его у себя) 
 
-#### [Дополнительные материалы: как запускать, как тестировать, как проверить](https://github.com/netology-code/devkub-homeworks/tree/main/11-microservices-02-principles)
+![alt text](image-9.png)
 
+Вот лог загрузки, где видно что файл идентифицирован как PNG
+
+![alt text](image-10.png)
+
+Минио Сторадж сервер
+![alt text](image-11.png)
+
+А вот так мы проверили что файл доступен, так как 200
+![alt text](image-12.png)
+
+Скачиваем файл:
+
+![alt text](image-13.png)
+
+![alt text](image-14.png)
+
+![alt text](image-15.png)
+
+Даже по типу хранимых данных в файле видно что это PNG  :-)
+
+![alt text](image-16.png)
+
+Задание выполнено, спасибо огромное за опыт, теперь стало прозрачно про токены и mc  =)
+
+С уважением Виктор.

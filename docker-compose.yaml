@@ -29,9 +29,9 @@ services:
     restart: on-failure
     entrypoint: > 
       /bin/sh -c "      
-      /usr/bin/mc config host add storage http://storage:9000 ${Storage_AccessKey-STORAGE_ACCESS_KEY} ${Storage_Secret-STORAGE_SECRET_KEY} &&
+      /usr/bin/mc alias set storage http://storage:9000 ${Storage_AccessKey-STORAGE_ACCESS_KEY} ${Storage_Secret-STORAGE_SECRET_KEY} &&
       /usr/bin/mc mb --ignore-existing storage/${Storage_Bucket:-data} &&
-      /usr/bin/mc policy set download storage/${Storage_Bucket:-data} &&
+      /usr/bin/mc anonymous set download storage/${Storage_Bucket:-data} &&
       exit 0;
       "
 
@@ -60,9 +60,9 @@ services:
   gateway:
     image: nginx:alpine
     volumes:
-      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
-      - "80:8080"      
+      - "80:80"      
     depends_on:
       - storage
       - uploader
